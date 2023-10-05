@@ -61,13 +61,15 @@ class Snake:
             for i in range(len(self.word)):
                 if self.word[i] == self.letters_on_field[index][0]:
                     self.word_line[i] = self.letters_on_field[index][0]
+            if ''.join(self.word_line) == self.word:
+                self.game = 'win'
 
         else:
             self.mistakes += 1
             self.hangman = self.templates[self.mistakes]
             if self.mistakes >= MAX_MISTAKES:
                 self.game = 'defeat'
-        print(self.word_line)
+
 
     def generate_field(self):
         for i in ALPHA:
@@ -117,7 +119,7 @@ if __name__ == '__main__':
     os.system(f"mode con cols={WIDTH + 50} lines={HEIGHT + 3}")
     fps = 5
     file = open('nouns_list.txt', encoding='utf-8')
-    WORDS = file.readlines()
+    WORDS = list(map(lambda x: x.strip(), file.readlines()))
     ALPHA = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
     file.close()
 
@@ -126,22 +128,21 @@ if __name__ == '__main__':
         snake = Snake()
         listener = keyboard.Listener(on_press=on_press, suppress=False)
         snake.word = random.choice(WORDS)
-        print(snake.word)
         while snake.word in snake.used_words:
             snake.word = random.choice(WORDS)
         snake.used_words.append(snake.word)
         snake.word_line = ['_' for _ in range(len(snake.word))]
+        print(snake.word)
+        print(snake.word_line)
         snake.generate_field()
         listener.start()
-        for i in range(len(snake.templates)):
-            for j in range(len(snake.templates[i])):
-                print(snake.templates[i][j])
         while snake.game == 'play':
             snake.direction_changed = False
             snake.move()
             if snake.game == 'play':
                 update_world()
                 time.sleep(1/fps)
+        print('AAAAAAAA')
         if snake.game == 'defeat':
             listener.stop()
             os.system('cls||clear')
@@ -151,9 +152,10 @@ if __name__ == '__main__':
             else:
                 break
         elif snake.game == 'win':
+            print('BBBBBB')
             listener.stop()
             os.system('cls||clear')
-            if ('Капец, ты выиграл! Можешь начать заново, а можешь пойти потрогать траву. 0 - выйти, 1 - заново:') == '1':
+            if input('Капец, ты выиграл! Можешь начать заново, а можешь пойти потрогать траву. 0 - выйти, 1 - заново:') == '1':
                 snake.game = 'play'
             else:
                 break
