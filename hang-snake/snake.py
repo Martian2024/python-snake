@@ -8,22 +8,10 @@ class Snake:
     def __init__(self):
         self.direction = 'up'
         self.points = [[WIDTH // 2, HEIGHT // 2], [WIDTH // 2, HEIGHT // 2 + 1], [WIDTH // 2, HEIGHT // 2 + 1]]
-        self.letters_on_field = []
+        self.field = []
         self.game = 'play'
         self.direction_changed = False
-        self.guessed = []
-        self.mistakes = 0
-        self.word = ''
-        self.word_line = []
-        self.upload_templates()
 
-    def upload_templates(self):
-        self.templates = [[] for _ in range(6)]
-        file = open('template.txt').readlines()
-        for i in range(6):
-            for j in range(30):
-                self.templates[i].append(file[30 * i + j].replace('\n', ''))
-        self.hangman = self.templates[0]
 
     def move(self):
         new_x, new_y = self.points[0]
@@ -37,11 +25,10 @@ class Snake:
             case 'down':
                 self.points.insert(0, [new_x, new_y + 1])
         flag = False
-        for i in range(len(self.letters_on_field)):
-            if self.letters_on_field[i][1] == self.points[0]:
-                self.eat(i)
+        for i in range(len(self.field)):
+            if self.field[i] == self.points[0]:
                 flag = True
-                self.letters_on_field.pop(i)
+                self.field.pop(i)
                 break
         if not flag:
             self.points.pop()
@@ -49,28 +36,13 @@ class Snake:
         if self.points[0][0] < 0 or self.points[0][1] < 0 or self.points[0][0] >= WIDTH or \
                 self.points[0][1] >= HEIGHT or self.points.count(self.points[0]) == 2:
             self.game = 'defeat'
-
-
-
-
-    def eat(self, index):
-        if self.letters_on_field[index][0] in self.word:
-            for i in range(len(self.word)):
-                if self.word[i] == self.letters_on_field[index][0]:
-                    self.word_line[i] = self.letters_on_field[index][0]
-            if ''.join(self.word_line) == self.word:
-                self.game = 'win'
-
-        else:
-            self.mistakes += 1
-            self.hangman = self.templates[self.mistakes]
-            if self.mistakes >= MAX_MISTAKES:
-                self.game = 'defeat'
+        elif len(self.points) == 100:
+            self.game = 'win'
 
 
     def generate_field(self):
-        for i in ALPHA:
-            self.letters_on_field.append([i, [random.randint(0, WIDTH - 2), random.randint(0, HEIGHT - 2)]])
+        for i in range(100):
+            self.field.append([random.randint(0, WIDTH - 2), random.randint(0, HEIGHT - 2)])
 
 
 def on_press(key):
@@ -95,16 +67,13 @@ def on_press(key):
 def update_world():
     os.system('cls||clear')
     world = [[" " for i in range(WIDTH)] for i in range(HEIGHT)]
-    for i in snake.letters_on_field:
-        world[i[1][1]][i[1][0]] = i[0]
+    for i in snake.field:
+        world[i[1]][i[0]] = '@'
     print(' ' * WIDTH)
     print(' ' + '_' * WIDTH)
     for i in snake.points[1:]:
         world[i[1]][i[0]] = '*'
     world[snake.points[0][1]][snake.points[0][0]] = '0'
-    for i in range(len(world)):
-        world[i].append(snake.hangman[i])
-    world[2][-1] = 5 * ' ' + ' '.join(snake.word_line)
     for i in range(len(world)):
         print('|' + ''.join(world[i][:-1]) + '|' + world[i][-1])
     print(' ' + '¯' * WIDTH)
@@ -113,24 +82,13 @@ def update_world():
 if __name__ == '__main__':
     WIDTH = 50
     HEIGHT = 30
-    os.system(f"mode con cols={WIDTH + 50} lines={HEIGHT + 5}")
+    os.system(f"mode con cols={WIDTH + 50} lines={HEIGHT + 3}")
     fps = 5
-    file = open('nouns_list.txt', encoding='utf-8')
-    WORDS = list(map(lambda x: x.strip(), file.readlines()))
-    ALPHA = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
-    file.close()
-    used_words = []
-    MAX_MISTAKES = 5
     while True:
         snake = Snake()
         listener = keyboard.Listener(on_press=on_press, suppress=False)
-        snake.word = random.choice(WORDS)
-        while snake.word in used_words:
-             snake.word = random.choice(WORDS)
-        used_words.append(snake.word)
-        snake.word_line = ['_' for _ in range(len(snake.word))]
-        snake.generate_field()
         listener.start()
+        snake.generate_field()
         while snake.game == 'play':
             snake.direction_changed = False
             snake.move()
@@ -139,15 +97,14 @@ if __name__ == '__main__':
                 time.sleep(1/fps)
         if snake.game == 'defeat':
             listener.stop()
-            snake.word_line = list(snake.word)
-            update_world()
+            os.system('cls||clear')
             if input('Чел, ты лох, и ты проиграл. Можешь поплакать об этом, а можешь начать заново. Ну как? 0 - выйти, 1 - заново: ') == '1':
                 snake.game = 'play'
             else:
                 break
         elif snake.game == 'win':
             listener.stop()
-            update_world()
+            os.system('cls||clear')
             if input('Капец, ты выиграл! Можешь начать заново, а можешь пойти потрогать траву. 0 - выйти, 1 - заново:') == '1':
                 snake.game = 'play'
             else:
